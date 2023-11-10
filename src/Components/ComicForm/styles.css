@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif; /* Default font */
+  }
+  
+  /* Add a class to apply different fonts */
+  .comic-text {
+    font-family: 'Arial', sans-serif; /* Default font */
+  }
+  
+  /* Apply different fonts based on the selectedFont state */
+  .comic-text.KOMIKA_HANDS {
+    font-family: 'KOMIKA HANDS', cursive;
+  }
+  
+  .comic-text.ANIME_INEPT {
+    font-family: 'ANIME INEPT', cursive;
+  }
+  
+  .comic-text.Suplexmentary {
+    font-family: 'Suplexmentary', sans-serif;
+  }
+  
+  .comic-text.VENTURA_EDDING {
+    font-family: 'VENTURA EDDING', sans-serif;
+  }
+  
+  /* ... Add similar rules for other font options ... */
+  

@@ -5,6 +5,8 @@ const ComicPage = () => {
   const [currentPanel, setCurrentPanel] = useState(1);
   const [comicData, setComicData] = useState([]);
   const [latestText, setLatestText] = useState('');
+  const [editMode, setEditMode] = useState(null);
+  const [editableText, setEditableText] = useState('');
 
   const enqueueApiCall = async (panelNumber, panelText) => {
     try {
@@ -46,51 +48,18 @@ const ComicPage = () => {
   };
 
   const onSubmitPanel = async (panelNumber, panelText) => {
-    try {
-      // Move to the next panel immediately
-      setCurrentPanel((prevPanel) => prevPanel + 1);
-  
-      // Enqueue the API call for the current panel
-      const response = await fetch('https://xdwvg9no7pefghrn.us-east-1.aws.endpoints.huggingface.cloud', {
-        method: 'POST',
-        headers: {
-          'Accept': 'image/png',
-          'Authorization': 'Bearer VknySbLLTUjbxXAXCjyfaFIPwUTCeRXbFSOjwRiCxsxFyhbnGjSFalPKrpvvDAaPVzWEevPljilLVDBiTzfIbWFdxOkYJxnOPoHhkkVGzAknaOulWggusSFewzpqsNWM',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ inputs: panelText }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Image generation failed');
-      }
-  
-      const imageData = await response.blob();
-      const imageUrl = URL.createObjectURL(imageData);
-  
-      // Update the existing data entry or add a new one
-      const existingIndex = comicData.findIndex((data) => data.panelNumber === panelNumber);
-      if (existingIndex !== -1) {
-        setComicData((prevData) => [
-          ...prevData.slice(0, existingIndex),
-          { panelNumber, panelText, imageUrl },
-          ...prevData.slice(existingIndex + 1),
-        ]);
-      } else {
-        setComicData((prevData) => [
-          ...prevData,
-          { panelNumber, panelText, imageUrl },
-        ]);
-      }
-  
-      // Update the latestText state for the input box of the next panel
-      setLatestText(panelText);
-    } catch (error) {
-      console.error('Error:', error.message);
-      // Handle error and provide feedback to the user
-    }
+    // Move to the next panel immediately
+    setCurrentPanel((prevPanel) => prevPanel + 1);
+
+    // Enqueue the API call for the current panel
+    await enqueueApiCall(panelNumber, panelText);
+
+    // Update the latestText state for the input box of the next panel
+    setLatestText(panelText);
+
+    // Reset editable text state
+    setEditableText('');
   };
-  
 
   const onBackButtonClick = () => {
     // Move back to the previous panel
@@ -99,6 +68,9 @@ const ComicPage = () => {
     // Set the latestText state to the text of the previous panel
     const previousPanelData = comicData.find((data) => data.panelNumber === currentPanel - 1);
     setLatestText(previousPanelData ? previousPanelData.panelText : '');
+
+    // Reset editable text state
+    setEditableText('');
   };
 
   const onNextButtonClick = async () => {
@@ -107,6 +79,29 @@ const ComicPage = () => {
 
     // Enqueue the API call for the next panel
     await enqueueApiCall(currentPanel + 1, latestText);
+
+    // Reset editable text state
+    setEditableText('');
+  };
+
+  const onEditTextClick = (panelNumber, initialText) => {
+    setEditMode(panelNumber);
+    setEditableText(initialText);
+  };
+
+  const onEditSubmit = (panelNumber) => {
+    // Update the text for the specified panel
+    setComicData((prevData) => {
+      const newData = [...prevData];
+      const index = newData.findIndex((data) => data.panelNumber === panelNumber);
+      if (index !== -1) {
+        newData[index].panelText = editableText;
+      }
+      return newData;
+    });
+
+    // Exit edit mode
+    setEditMode(null);
   };
 
   return (
@@ -135,10 +130,24 @@ const ComicPage = () => {
       {/* Display the generated images and text */}
       <div>
         {comicData.map(({ panelNumber, panelText, imageUrl }, index) => (
-          <div key={index}>
+          <div key={index} style={{ position: 'relative', display: 'inline-block' }}>
             <h4>Comic Panel {panelNumber}</h4>
-            <img src={imageUrl} alt={`Panel ${panelNumber}`} />
-            <p>{panelText}</p>
+            <img src={imageUrl} alt={`Panel ${panelNumber}`} style={{ width: '300px', height: '300px' }} />
+            <div style={{ position: 'absolute', top: 0, right: 0, padding: '8px', background: 'rgba(255, 255, 255, 0.7)' }}>
+              {editMode === panelNumber ? (
+                <div>
+                  <input
+                    type="text"
+                    value={editableText}
+                    onChange={(e) => setEditableText(e.target.value)}
+                  />
+                  <button onClick={() => onEditSubmit(panelNumber)}>Submit</button>
+                </div>
+              ) : (
+                <p>{panelText}</p>
+              )}
+              <button onClick={() => onEditTextClick(panelNumber, panelText)}>Edit Text</button>
+            </div>
           </div>
         ))}
       </div>

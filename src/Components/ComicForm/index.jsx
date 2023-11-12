@@ -1,25 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-const ComicForm = ({ panelNumber, onSubmitPanel, latestText, storedText }) => {
+const ComicForm = ({ panelNumber, onSubmitPanel, updateProgress }) => {
   const [panelText, setPanelText] = useState('');
-
-  useEffect(() => {
-    // Update the input box text when the latestText prop changes
-    setPanelText(latestText);
-  }, [latestText]);
-
-  useEffect(() => {
-    // Initialize the input box text when the storedText prop changes
-    setPanelText(storedText || '');
-  }, [storedText]);
-
   const handleInputChange = (e) => {
     setPanelText(e.target.value);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Call the parent function to handle API call and data storage
-    onSubmitPanel(panelNumber, panelText);
+    await onSubmitPanel(panelNumber, panelText);
+    // Update progress in the parent component
+    updateProgress();
   };
 
   return (
